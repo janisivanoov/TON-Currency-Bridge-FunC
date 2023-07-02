@@ -1,0 +1,19 @@
+() recv_internal(cell in_msg_cell, slice in_msg) impure {
+  var cs = in_msg_cell.begin_parse();
+  var flags = cs~load_uint(4);
+  var sender = cs~load_msg_addr();
+
+  int op = in_msg~load_uint(32);
+  ;; token interface
+  if (process_token_request(flags, sender, op, in_msg)) {
+    return ();
+  }
+  int query_id = in_msg~load_uint(64);
+
+  ifnot (op >> 31) {
+    ;; unknown query, return error
+    return send_message_back(sender, 0xffffffff, query_id, op, 0, 64);
+  }
+  ;; unknown answer, ignore
+  return ();
+}
